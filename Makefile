@@ -1,43 +1,61 @@
-$(info RFC rendering has been tested with mmark version 1.3.4 and xml2rfc 2.5.1, please ensure these are installed and recent enough.)
-
-VERSION_MATROSKA := 04
-VERSION_CODEC := 03
-VERSION_TAGS := 03
+VERSION_MATROSKA := 06
+VERSION_CODEC := 05
+VERSION_TAGS := 05
 STATUS_MATROSKA := draft-
 STATUS_CODEC := draft-
 STATUS_TAGS := draft-
 OUTPUT_MATROSKA := $(STATUS_MATROSKA)ietf-cellar-matroska-$(VERSION_MATROSKA)
-OUTPUT_CODEC := $(STATUS_CODEC)ietf-cellar-codecs-$(VERSION_CODEC)
+OUTPUT_CODEC := $(STATUS_CODEC)ietf-cellar-codec-$(VERSION_CODEC)
 OUTPUT_TAGS := $(STATUS_TAGS)ietf-cellar-tags-$(VERSION_TAGS)
 
-all: $(OUTPUT_MATROSKA).html $(OUTPUT_MATROSKA).txt $(OUTPUT_MATROSKA).xml $(OUTPUT_CODEC).html $(OUTPUT_CODEC).txt $(OUTPUT_CODEC).xml $(OUTPUT_TAGS).html $(OUTPUT_TAGS).txt $(OUTPUT_TAGS).xml
+XML2RFC_CALL := xml2rfc
+MMARK_CALL := mmark
+EBML_SCHEMA_XSD := ../ebml-specification/EBMLSchema.xsd
+
+-include runtimes.mak
+
+XML2RFC := $(XML2RFC_CALL) --v3
+MMARK := $(MMARK_CALL)
+
+all: matroska codecs tags
+	$(info RFC rendering has been tested with mmark version 2.2.8 and xml2rfc 2.46.0, please ensure these are installed and recent enough.)
+
+matroska: $(OUTPUT_MATROSKA).html $(OUTPUT_MATROSKA).txt $(OUTPUT_MATROSKA).xml
+codecs: $(OUTPUT_CODEC).html $(OUTPUT_CODEC).txt $(OUTPUT_CODEC).xml
+tags: $(OUTPUT_TAGS).html $(OUTPUT_TAGS).txt $(OUTPUT_TAGS).xml
 
 matroska_xsd.xml: transforms/schema_clean.xsl ebml_matroska.xml
 	xsltproc transforms/schema_clean.xsl ebml_matroska.xml > $@
 
-check: matroska_xsd.xml
-	xmllint --noout --schema ../ebml-specification/EBMLSchema.xsd matroska_xsd.xml
+check: matroska_xsd.xml $(EBML_SCHEMA_XSD)
+	xmllint --noout --schema $(EBML_SCHEMA_XSD) matroska_xsd.xml
 
 ebml_matroska_elements4rfc.md: transforms/ebml_schema2markdown4rfc.xsl matroska_xsd.xml
 	xsltproc transforms/ebml_schema2markdown4rfc.xsl matroska_xsd.xml > $@
 
-$(OUTPUT_MATROSKA).md: index_matroska.md diagram.md matroska_schema_section_header.md ebml_matroska_elements4rfc.md ordering.md chapters.md attachments.md cues.md streaming.md menu.md notes.md
-	cat $^ | grep -v '^---' > $@
+$(OUTPUT_MATROSKA).md: index_matroska.md diagram.md matroska_schema_section_header.md ebml_matroska_elements4rfc.md ordering.md chapters.md attachments.md cues.md streaming.md menu.md notes.md rfc_backmatter_matroska.md
+	cat $^ | sed -e '/^---/,/^---/d' \
+	             -e "s/@BUILD_DATE@/$(shell date +'%F')/" \
+	             -e "s/@BUILD_VERSION@/$(OUTPUT_MATROSKA)/" > $@
 
-$(OUTPUT_CODEC).md: index_codec.md codec_specs.md subtitles.md
-	cat $^ > $@
+$(OUTPUT_CODEC).md: index_codec.md codec_specs.md subtitles.md block_additional_mappings_intro.md block_additional_mappings/*.md rfc_backmatter_codec.md
+	cat $^ | sed -e "s/@BUILD_DATE@/$(shell date +'%F')/" \
+	             -e "s/@BUILD_VERSION@/$(OUTPUT_CODEC)/" > $@
 
-$(OUTPUT_TAGS).md: index_tags.md tagging.md matroska_tagging_registry.md tagging_end.md
-	cat $^ > $@
+$(OUTPUT_TAGS).md: index_tags.md tagging.md matroska_tagging_registry.md tagging_end.md rfc_backmatter_tags.md
+	cat $^ | sed -e "s/@BUILD_DATE@/$(shell date +'%F')/" \
+	             -e "s/@BUILD_VERSION@/$(OUTPUT_TAGS)/" > $@
 
 %.xml: %.md
-	mmark -xml2 -page $< | awk '/<?rfc toc=/ && !modif { printf("<?rfc tocdepth=\"6\"?>\n"); modif=1 } {print}' > $@
+	$(MMARK) $< | awk '/<?rfc toc=/ && !modif { printf("<?rfc tocdepth=\"6\"?>\n"); modif=1 } {print}' | \
+		sed -e "s/submissionType=/sortRefs=\"true\" submissionType=/" \
+		> $@
 
 %.html: %.xml
-	xml2rfc --html $< -o $@
+	$(XML2RFC) --html $< -o $@
 
 %.txt: %.xml
-	xml2rfc $< -o $@
+	$(XML2RFC) $< -o $@
 
 matroska_tagging_registry.md: matroska_tags.xml transforms/matroska_tags2markdown4rfc.xsl
 	xsltproc transforms/matroska_tags2markdown4rfc.xsl $< > $@
@@ -50,3 +68,5 @@ clean:
 	$(RM) -f $(OUTPUT_CODEC).txt $(OUTPUT_CODEC).html $(OUTPUT_CODEC).md $(OUTPUT_CODEC).xml
 	$(RM) -f $(OUTPUT_TAGS).txt $(OUTPUT_TAGS).html $(OUTPUT_TAGS).md $(OUTPUT_TAGS).xml
 	$(RM) -rf _site
+
+.PHONY: clean check website matroska codecs tags all
