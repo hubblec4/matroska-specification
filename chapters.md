@@ -4,58 +4,54 @@ title: Chapters
 
 # Chapters
 
-## Edition and Chapter Flags
+The Matroska Chapters system can have multiple `Editions` and each `Edition` can consist of
+`Simple Chapters` where a chapter start time is used as marker in the timeline only. An
+`Edition` can be more complex with `Ordered Chapters` where a chapter end time stamp is additionally
+used or much more complex with `Linked Chapters`. The Matroska Chapters system can also have a menu
+structure, borrowed from the DVD menu system, or have it's own Native Matroska menu structure.
 
-### Chapter Flags
+## EditionEntry
 
-Two `Chapter Flags` are defined to describe the behavior of the `ChapterAtom Element`:
-`ChapterFlagHidden` and `ChapterFlagEnabled`.
+The `EditionEntry` is also called an `Edition`.
+An `Edition` contains a set of `Edition` flags and **MUST** contain at least one `ChapterAtom Element`.
+Chapters are always inside an `Edition` (or a Chapter itself part of an `Edition`).
+Multiple Editions are allowed. Some of these Editions **MAY** be ordered and others not.
 
-If a `ChapterAtom Element` is the `Child Element` of another `ChapterAtom Element`
-with a `Chapter Flag` set to `true`, then the `Child ChapterAtom Element` **MUST** be
-interpreted as having its same `Chapter Flag` set to `true`. If a `ChapterAtom Element`
-is the `Child Element` of another `ChapterAtom Element` with a `Chapter Flag` set to `false`,
-or if the `ChapterAtom Element` does not have a `ChapterAtom Element` as its `Parent Element`,
-then it **MUST** be interpreted according to its own `Chapter Flag`.
+### EditionFlagDefault
 
-As an example, consider a `Parent ChapterAtom Element` that has its `ChapterFlagHidden`
-set to `true` and also contains two child `ChapterAtoms`, the first with `ChapterFlagHidden`
-set to `true` and the second with `ChapterFlagHidden` either set to `false` or not present
-at all (in which case the default value of the Element applies, which is `false`).
-Since the parent `ChapterAtom` has its `ChapterFlagHidden` set to `true`, all of its
-children `ChapterAtoms` **MUST** also be interpreted as if their `ChapterFlagHidden` is also
-set to `true`. However, if a `Control Track` toggles the parent's `ChapterFlagHidden`
-flag to `false`, then only the parent `ChapterAtom` and its second child `ChapterAtom`
-**MUST** be interpreted as if `ChapterFlagHidden` is set to `false`. The first child
-`ChapterAtom`, which has the `ChapterFlagHidden` flag set to `true`, retains its value
-until its value is toggled to `false` by a `Control Track`.
+Only one `Edition` **SHOULD** have an `EditionFlagDefault` flag set to `true`.
 
-### Edition Flags
+### Default Edition
 
-Three `Edition Flags` are defined to describe the behavior of the `EditionEntry Element`:
-`EditionFlagHidden`, `EditionFlagDefault`, and `EditionFlagOrdered`.
+The `Default Edition` is the `Edition` that a `Matroska Player` **SHOULD** use for playback by default.
 
+The first `Edition` with the `EditionFlagDefault` flag set to `true` is the `Default Edition`.
 
-#### EditionFlagHidden
+When all `EditionFlagDefault` flags are set to `false`, then the first `Edition`
+is the `Default Edition`.
 
-The `EditionFlagHidden Flag` behaves similarly to the `ChapterFlagHidden Flag`:
-if `EditionFlagHidden` is set to `true`, its `Child ChapterAtoms Elements` **MUST** also
-be interpreted as if their `ChapterFlagHidden` is also set to `true`, regardless
-of their own `ChapterFlagHidden Flags`. If `EditionFlagHidden` is toggled by a
-`Control Track` to `false`, the `ChapterFlagHidden Flags` of the `Child ChapterAtoms Elements`
-**SHALL** determine whether the `ChapterAtom` is hidden or not.
+Edition   | FlagDefault | Default Edition
+:---------|:------------|:---------------
+Edition 1 | true        | X
+Edition 2 | true        |
+Edition 3 | true        |
+Table: Default edition, all default{#defaultEditionAllDefault}
 
+Edition   | FlagDefault | Default Edition
+:---------|:------------|:---------------
+Edition 1 | false       | X
+Edition 2 | false       |
+Edition 3 | false       |
+Table: Default edition, no default{#defaultEditionNoDefault}
 
-#### EditionFlagDefault
+Edition   | FlagDefault | Default Edition
+:---------|:------------|:---------------
+Edition 1 | false       |
+Edition 2 | true        | X
+Edition 3 | false       |
+Table: Default edition, with default{#defaultEditionWithDefault}
 
-It is **RECOMMENDED** that no more than one `Edition` have an `EditionFlagDefault Flag`
-set to `true`. The first `Edition` with both the `EditionFlagDefault Flag` set to `true`
-and the `EditionFlagHidden Flag` set to `false` is the Default Edition. When all
-`EditionFlagDefault Flags` are set to `false`, then the first `Edition` with the
-`EditionFlagHidden Flag` set to `false` is the Default Edition. The Default Edition
-is the edition that should be used for playback by default.
-
-#### EditionFlagOrdered
+### EditionFlagOrdered
 
 The `EditionFlagOrdered Flag` is a significant feature as it enables an `Edition`
 of `Ordered Chapters` which defines and arranges a virtual timeline rather than simply
@@ -72,7 +68,7 @@ play those Chapters in their stored order from the timestamp marked in the
 If the `EditionFlagOrdered Flag` is set to `false`, `Simple Chapters` are used and
 only the `ChapterTimeStart` of a `Chapter` is used as chapter mark to jump to the
 predefined point in the timeline. With `Simple Chapters`, a `Matroska Player` **MUST**
-ignore certain Chapter elements. All these elements are now informational only.
+ignore certain `Chapter Elements`. All these elements are now informational only.
 
 The following list shows the different Chapter elements only found in `Ordered Chapters`.
 
@@ -87,7 +83,10 @@ The following list shows the different Chapter elements only found in `Ordered C
 | TrackEntry/TrackTranslate             |
 Table: elements only found in ordered chapters{#orderedOnly}
 
-##### Ordered-Edition and Matroska Segment-Linking
+Furthermore there are other EBML `Elements` which could be used if the `EditionFlagOrdered`
+flag is set to `true`.
+
+#### Ordered-Edition and Matroska Segment-Linking
 
 - Hard Linking: `Ordered-Chapters` supersedes the `Hard Linking`.
 - Soft Linking: In this complex system `Ordered Chapters` are **REQUIRED** and a
@@ -124,89 +123,67 @@ A `Matroska Player` **MUST** play the content of the linked Segment from the
 When the `ChapterSegmentEditionUID` is set to a valid `EditionUID` from the linked
 Segment. A `Matroska Player` **MUST** play these linked `Edition`.
 
+## ChapterAtom
+The `ChapterAtom` is also called a `Chapter`.
+A `Chapter` element can be used recursively. Such a child `Chapter` is called `Nested Chapter`.
+
+### ChapterTimeStart
+A not scaled timestamp of the start of `Chapter` with nanosecond accuracy.
+For `Simple Chapters` this is the position of the chapter markers in the timeline.
+
+### ChapterTimeEnd
+A not scaled timestamp of the end of `Chapter` with nanosecond accuracy.
+The end timestamp is used when the `EditionFlagOrdered` flag of the `Edition` is set to `true`.
+The timestamp defined by the `ChapterTimeEnd` is not part of the `Chapter`.
+A `Matroska Player` calculates the duration of this `Chapter` using the difference between the
+`ChapterTimeEnd` and `ChapterTimeStart`.
+The end timestamp **MUST** be greater than the start timestamp otherwise the duration would be
+negative which is illegal.
+If the duration of a `Chapter` is 0, this `Chapter` **MUST** be ignored.
+
+Chapter   | Start timestamp | End timestamp | Duration
+:---------|:----------------|:--------------|:-----
+Chapter 1 | 0               | 1000000000    | 1000000000
+Chapter 2 | 1000000000      | 5000000000    | 4000000000
+Chapter 3 | 6000000000      | 6000000000    | 0 (chapter not used)
+Chapter 4 | 9000000000      | 8000000000    | -1000000000 (illegal)
+Table: ChapterTimeEnd usage possibilities{#ChapterTimeEndUsage}
+
+### ChapterFlagHidden
+
+Each Chapter
+`ChapterFlagHidden` flag works independently from parent chapters.
+A `Nested Chapter` with `ChapterFlagHidden` flag set to `false` remains visible even if the
+`Parent Chapter` `ChapterFlagHidden` flag is set to `true`.
+
+Chapter + Nested Chapter | ChapterFlagHidden | visible
+:------------------------|:------------------|:-------
+Chapter 1                | false             | yes
+ Nested Chapter 1.1      | false             | yes
+ Nested Chapter 1.2      | true              | no
+Chapter 2                | true              | no
+ Nested Chapter 2.1      | false             | yes
+ Nested Chapter 2.2      | true              | no
+Table: ChapterFlagHidden nested visibility{#ChapterFlagHiddenNested}
+
 ## Menu features
 
-The menu features are handled like a _chapter codec_. That means each codec has a type,
+The menu features are handled like a `chapter codec`. That means each codec has a type,
 some private data and some data in the chapters.
 
 The type of the menu system is defined by the `ChapProcessCodecID` parameter. For now,
-only 2 values are supported : 0 matroska script, 1 menu borrowed from the DVD. 
-he private data depend on the type of menu system (stored in ChapProcessPrivate),
-idem for the data in the chapters (stored in ChapProcessData).
+only 2 values are supported : 0 matroska script, 1 menu borrowed from the DVD.
+The private data depend on the type of menu system (stored in `ChapProcessPrivate`),
+idem for the data in the chapters (stored in `ChapProcessData`).
 
-### Matroska Script (0)
+The menu system, as well a Chapter Codecs in general, can do actions on the `Matroska Player`
+like jumping to another Chapter or Edition, selecting different tracks and possibly more.
+The scope of all the possibilities of Chapter Codecs is not covered in this document as it
+depends on the Chapter Codec features and its integration in a `Matroska Player`.
 
-This is the case when `ChapProcessCodecID` = 0\. This is a script language build for
-Matroska purposes. The inspiration comes from ActionScript, javascript and other similar
-scripting languages. The commands are stored as text commands, in UTF-8\. The syntax is C like,
-with commands spanned on many lines, each terminating with a ";". You can also include comments
-at the end of lines with "//" or comment many lines using "/* \*/". The scripts are stored
-in ChapProcessData. For the moment ChapProcessPrivate is not used.
+## Chapter Examples
 
-The one and only command existing for the moment is `GotoAndPlay( ChapterUID );`. As the
-same suggests, it means that, when this command is encountered, the `Matroska Player`
-**SHOULD** jump to the `Chapter` specified by the UID and play it.
-
-### DVD menu (1)
-
-This is the case when `ChapProcessCodecID` = 1\. Each level of a chapter corresponds
-to a logical level in the DVD system that is stored in the first octet of the ChapProcessPrivate.
-This DVD hierarchy is as follows:
-
-| ChapProcessPrivate | DVD Name | Hierarchy                                           | Commands Possible | Comment                                   |
-|--------------------|----------|-----------------------------------------------------|-------------------|-------------------------------------------|
-| 0x30               | SS       | DVD domain                                          | -                 | First Play, Video Manager, Video Title    |
-| 0x2A               | LU       | Language Unit                                       | -                 | Contains only PGCs                        |
-| 0x28               | TT       | Title                                               | -                 | Contains only PGCs                        |
-| 0x20               | PGC      | Program Group Chain (PGC)                           | *                 |                                           |
-| 0x18               | PG       | Program 1 / Program 2 / Program 3                   | -                 |                                           |
-| 0x10               | PTT      | Part Of Title 1 / Part Of Title 2                   | -                 | Equivalent to the chapters on the sleeve. |
-| 0x08               | CN       | Cell 1 / Cell 2 / Cell 3 / Cell 4 / Cell 5 / Cell 6 | -                 |                                           |
-
-You can also recover wether a Segment is a Video Manager (VMG), Video Title Set (VTS)
-or Video Title Set Menu (VTSM) from the ChapterTranslateID element found in the Segment Info.
-This field uses 2 octets as follows:
-
-1.  Domain Type: 0 for VMG, the domain number for VTS and VTSM
-2.  Domain Value: 0 for VMG and VTSM, 1 for the VTS source.
-
-For instance, the menu part from VTS_01_0.VOB would be coded [1,0] and the content
-part from VTS_02_3.VOB would be [2,1]. The VMG is always [0,0]
-
-The following octets of ChapProcessPrivate are as follows:
-
-| Octet 1 | DVD Name | Following Octets                                                                             |
-|---------|----------|----------------------------------------------------------------------------------------------|
-| 0x30    | SS       | Domain name code (1: 0x00= First play, 0xC0= VMG, 0x40= VTSM, 0x80= VTS) + VTS(M) number (2) |
-| 0x2A    | LU       | Language code (2) + Language extension (1)                                                   |
-| 0x28    | TT       | global Title number (2) + corresponding TTN of the VTS (1)                                   |
-| 0x20    | PGC      | PGC number (2) + Playback Type (1) + Disabled User Operations (4)                            |
-| 0x18    | PG       | Program number (2)                                                                           |
-| 0x10    | PTT      | PTT-chapter number (1)                                                                       |
-| 0x08    | CN       | Cell number [VOB ID(2)][Cell ID(1)][Angle Num(1)]                                            |
-
-If the level specified in ChapProcessPrivate is a PGC (0x20), there is an octet
-called the Playback Type, specifying the kind of PGC defined:
-
-*   0x00: entry only/basic PGC
-*   0x82: Title+Entry Menu (only found in the Video Manager domain)
-*   0x83: Root Menu (only found in the VTSM domain)
-*   0x84: Subpicture Menu (only found in the VTSM domain)
-*   0x85: Audio Menu (only found in the VTSM domain)
-*   0x86: Angle Menu (only found in the VTSM domain)
-*   0x87: Chapter Menu (only found in the VTSM domain)
-
-The next 4 following octets correspond to the `User Operation flags`
-in the standard PGC. When a bit is set, the command **SHOULD** be disabled.
-
-ChapProcessData contains the pre/post/cell commands in binary format as there are stored on a DVD.
-There is just an octet preceding these data to specify the number of commands in the element.
-As follows: [# of commands(1)][command 1 (8)][command 2 (8)][command 3 (8)].
-
-More information on the DVD commands and format on DVD
-from the [@?DVD-Info] project.
-
-## Example 1 : basic chaptering
+### Example 1 : basic chaptering
 
 In this example a movie is split in different chapters. It could also just be an
 audio file (album) on which each track corresponds to a chapter.
@@ -232,7 +209,6 @@ This would translate in the following matroska form :
         <ChapLanguage>eng</ChapLanguage>
       </ChapterDisplay>
       <ChapterFlagHidden>0</ChapterFlagHidden>
-      <ChapterFlagEnabled>1</ChapterFlagEnabled>
     </ChapterAtom>
     <ChapterAtom>
       <ChapterUID>2311527</ChapterUID>
@@ -247,7 +223,6 @@ This would translate in the following matroska form :
         <ChapLanguage>fra</ChapLanguage>
       </ChapterDisplay>
       <ChapterFlagHidden>0</ChapterFlagHidden>
-      <ChapterFlagEnabled>1</ChapterFlagEnabled>
     </ChapterAtom>
     <ChapterAtom>
       <ChapterUID>3430008</ChapterUID>
@@ -262,7 +237,6 @@ This would translate in the following matroska form :
         <ChapLanguage>fra</ChapLanguage>
       </ChapterDisplay>
       <ChapterFlagHidden>0</ChapterFlagHidden>
-      <ChapterFlagEnabled>1</ChapterFlagEnabled>
     </ChapterAtom>
     <ChapterAtom>
       <ChapterUID>4548489</ChapterUID>
@@ -277,7 +251,6 @@ This would translate in the following matroska form :
         <ChapLanguage>fra</ChapLanguage>
       </ChapterDisplay>
       <ChapterFlagHidden>0</ChapterFlagHidden>
-      <ChapterFlagEnabled>1</ChapterFlagEnabled>
     </ChapterAtom>
     <ChapterAtom>
       <ChapterUID>5666960</ChapterUID>
@@ -292,20 +265,19 @@ This would translate in the following matroska form :
         <ChapLanguage>fra</ChapLanguage>
       </ChapterDisplay>
       <ChapterFlagHidden>0</ChapterFlagHidden>
-      <ChapterFlagEnabled>1</ChapterFlagEnabled>
     </ChapterAtom>
     <EditionFlagDefault>0</EditionFlagDefault>
-    <EditionFlagHidden>0</EditionFlagHidden>
   </EditionEntry>
 </Chapters>
 ```
+Figure: Basic Chapters Example.
 
-## Example 2 : nested chapters
+### Example 2 : nested chapters
 
 In this example an (existing) album is split into different chapters, and one
 of them contain another splitting.
 
-### The Micronauts "Bleep To Bleep"
+#### The Micronauts "Bleep To Bleep"
 
 *   00:00 - 12:28 : Baby Wants To Bleep/Rock
     *   00:00 - 04:38 : Baby wants to bleep (pt.1)
@@ -339,7 +311,6 @@ of them contain another splitting.
           <ChapLanguage>eng</ChapLanguage>
         </ChapterDisplay>
         <ChapterFlagHidden>0</ChapterFlagHidden>
-        <ChapterFlagEnabled>1</ChapterFlagEnabled>
       </ChapterAtom>
       <ChapterAtom>
         <ChapterUID>3</ChapterUID>
@@ -350,7 +321,6 @@ of them contain another splitting.
           <ChapLanguage>eng</ChapLanguage>
         </ChapterDisplay>
         <ChapterFlagHidden>0</ChapterFlagHidden>
-        <ChapterFlagEnabled>1</ChapterFlagEnabled>
       </ChapterAtom>
       <ChapterAtom>
         <ChapterUID>4</ChapterUID>
@@ -361,7 +331,6 @@ of them contain another splitting.
           <ChapLanguage>eng</ChapLanguage>
         </ChapterDisplay>
         <ChapterFlagHidden>0</ChapterFlagHidden>
-        <ChapterFlagEnabled>1</ChapterFlagEnabled>
       </ChapterAtom>
       <ChapterAtom>
         <ChapterUID>5</ChapterUID>
@@ -372,10 +341,8 @@ of them contain another splitting.
           <ChapLanguage>eng</ChapLanguage>
         </ChapterDisplay>
         <ChapterFlagHidden>0</ChapterFlagHidden>
-        <ChapterFlagEnabled>1</ChapterFlagEnabled>
       </ChapterAtom>
       <ChapterFlagHidden>0</ChapterFlagHidden>
-      <ChapterFlagEnabled>1</ChapterFlagEnabled>
     </ChapterAtom>
     <ChapterAtom>
       <ChapterUID>6</ChapterUID>
@@ -386,7 +353,6 @@ of them contain another splitting.
         <ChapLanguage>eng</ChapLanguage>
       </ChapterDisplay>
       <ChapterFlagHidden>0</ChapterFlagHidden>
-      <ChapterFlagEnabled>1</ChapterFlagEnabled>
     </ChapterAtom>
     <ChapterAtom>
       <ChapterUID>7</ChapterUID>
@@ -397,7 +363,6 @@ of them contain another splitting.
         <ChapLanguage>eng</ChapLanguage>
       </ChapterDisplay>
       <ChapterFlagHidden>0</ChapterFlagHidden>
-      <ChapterFlagEnabled>1</ChapterFlagEnabled>
     </ChapterAtom>
     <ChapterAtom>
       <ChapterUID>8</ChapterUID>
@@ -408,7 +373,6 @@ of them contain another splitting.
         <ChapLanguage>eng</ChapLanguage>
       </ChapterDisplay>
       <ChapterFlagHidden>0</ChapterFlagHidden>
-      <ChapterFlagEnabled>1</ChapterFlagEnabled>
     </ChapterAtom>
     <ChapterAtom>
       <ChapterUID>9</ChapterUID>
@@ -419,7 +383,6 @@ of them contain another splitting.
         <ChapLanguage>eng</ChapLanguage>
       </ChapterDisplay>
       <ChapterFlagHidden>0</ChapterFlagHidden>
-      <ChapterFlagEnabled>1</ChapterFlagEnabled>
     </ChapterAtom>
     <ChapterAtom>
       <ChapterUID>10</ChapterUID>
@@ -430,10 +393,9 @@ of them contain another splitting.
         <ChapLanguage>eng</ChapLanguage>
       </ChapterDisplay>
       <ChapterFlagHidden>0</ChapterFlagHidden>
-      <ChapterFlagEnabled>1</ChapterFlagEnabled>
     </ChapterAtom>
     <EditionFlagDefault>0</EditionFlagDefault>
-    <EditionFlagHidden>0</EditionFlagHidden>
   </EditionEntry>
 </Chapters>
 ```
+Figure: Nested Chapters Example.

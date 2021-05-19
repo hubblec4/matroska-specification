@@ -44,6 +44,8 @@ jobs:
           mv draft-ietf-cellar-matroska-??.xml artifacts
           mv draft-ietf-cellar-codec-??.xml artifacts
           mv draft-ietf-cellar-tags-??.xml artifacts
+          mv draft-ietf-cellar-chapter-codecs-??.xml artifacts
+          mv draft-ietf-cellar-control-??.xml artifacts
 
       - name: XML Artifact
         uses: actions/upload-artifact@master
@@ -59,6 +61,9 @@ jobs:
         uses: actions/checkout@v1
         with:
           fetch-depth: 1
+
+      - name: Get python (for xml2rfc)
+        uses: actions/setup-python@v1
 
       - name: Setup test tools
         # we need the apt update because old packages won't load

@@ -92,6 +92,7 @@ presentation with a 90 degree counter-clockwise rotation.
   <ProjectionPoseRoll>90</ProjectionPoseRoll>
 </Projection>
 ```
+Figure: Rotation example.
 
 # Matroska versioning
 
@@ -201,6 +202,7 @@ file name   | `SegmentUID`                      | `PrevUID`                     
 `start.mkv` | 71000c23cd310998 53fbc94dd984a5dd | n/a                               | a77b3598941cb803 eac0fcdafe44fac9
 `middle.mkv`| a77b3598941cb803 eac0fcdafe44fac9 | 71000c23cd310998 53fbc94dd984a5dd | 6c92285fa6d3e827 b198d120ea3ac674
 `end.mkv`   | 6c92285fa6d3e827 b198d120ea3ac674 | a77b3598941cb803 eac0fcdafe44fac9 | n/a
+Table: Usual Hard Linking UIDs{#hardLinkingUIDs}
 
 An other example where only the `NextUID` Element is used.
 
@@ -209,6 +211,7 @@ file name   | `SegmentUID`                      | `PrevUID`                     
 `start.mkv` | 71000c23cd310998 53fbc94dd984a5dd | n/a                               | a77b3598941cb803 eac0fcdafe44fac9
 `middle.mkv`| a77b3598941cb803 eac0fcdafe44fac9 | n/a                               | 6c92285fa6d3e827 b198d120ea3ac674
 `end.mkv`   | 6c92285fa6d3e827 b198d120ea3ac674 | n/a                               | n/a
+Table: Hard Linking without PrevUID{#hardLinkingWoPrevUID}
 
 A next example where only the `PrevUID` Element is used.
 
@@ -217,6 +220,7 @@ file name   | `SegmentUID`                      | `PrevUID`                     
 `start.mkv` | 71000c23cd310998 53fbc94dd984a5dd | n/a                               | n/a
 `middle.mkv`| a77b3598941cb803 eac0fcdafe44fac9 | 71000c23cd310998 53fbc94dd984a5dd | n/a
 `end.mkv`   | 6c92285fa6d3e827 b198d120ea3ac674 | a77b3598941cb803 eac0fcdafe44fac9 | n/a
+Table: Hard Linking without NextUID{#hardLinkingWoNextUID}
 
 In this example only the `middle.mkv` is using the `PrevUID` and `NextUID` Elements.
 
@@ -225,6 +229,7 @@ file name   | `SegmentUID`                      | `PrevUID`                     
 `start.mkv` | 71000c23cd310998 53fbc94dd984a5dd | n/a                               | n/a
 `middle.mkv`| a77b3598941cb803 eac0fcdafe44fac9 | 71000c23cd310998 53fbc94dd984a5dd | 6c92285fa6d3e827 b198d120ea3ac674
 `end.mkv`   | 6c92285fa6d3e827 b198d120ea3ac674 | n/a                               | n/a
+Table: Hard Linking with mixed UID links{#hardLinkingMixedUIDs}
 
 ## Medium Linking
 
@@ -383,6 +388,7 @@ Example track set:
 | 6   | Audio | esp  | 2.0    | 0        | 0       | Visual-impaired | Descriptive audio     |
 | 7   | Audio | eng  | 2.0    | 1        | 0       | Commentary      | Director's Commentary |
 | 8   | Audio | eng  | 2.0    | 1        | 0       | None            | Karaoke               |
+Table: Audio Tracks for default selection{#audioTrackSelection}
 
 Here we have a file with 7 audio tracks, of which 5 are in English and 2 are in Spanish.
 
@@ -430,6 +436,7 @@ Example track set:
 | 6   | Subtitles | por   | 0        | 1       | 0      | None             |                                    |
 | 7   | Subtitles | por   | 0        | 0       | 1      | None             | Signs                              |
 | 8   | Subtitles | por   | 0        | 0       | 0      | Hearing-impaired | SDH                                |
+Table: Subtitle Tracks for default selection{#subtitleTrackSelection}
 
 Here we have 2 audio tracks and 5 subtitle tracks. As we can see, French is the original language.
 

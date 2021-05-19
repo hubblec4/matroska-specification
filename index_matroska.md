@@ -102,7 +102,7 @@ The key words "**MUST**", "**MUST NOT**",
 "**SHOULD**", "**SHOULD NOT**",
 "**RECOMMENDED**", "**NOT RECOMMENDED**",
 "**MAY**", and "**OPTIONAL**" in this document are to be interpreted as
-described in BCP 14 [@!RFC2119] [@!RFC8174] 
+described in BCP 14 [@!RFC2119] [@!RFC8174]
 when, and only when, they appear in all capitals, as shown here.
 
 This document defines specific terms in order to define the format and application of `Matroska`.
@@ -157,7 +157,7 @@ Country codes are the same 2 octets country-codes as in Internet domains [@!IANA
 Each level can have different meanings for audio and video. The ORIGINAL_MEDIUM tag can be used to
 specify a string for ChapterPhysicalEquiv = 60\. Here is the list of possible levels for both audio and video:
 
-| ChapterPhysicalEquiv | Audio | Video | Comment |
+| Value | Audio | Video | Comment |
 |:---------------------|:------|:------|:--------|
 | 70 | SET / PACKAGE | SET / PACKAGE | the collection of different media |
 | 60 | CD / 12" / 10" / 7" / TAPE / MINIDISC / DAT | DVD / VHS / LASERDISC | the physical medium like a CD or a DVD |
@@ -166,6 +166,7 @@ specify a string for ChapterPhysicalEquiv = 60\. Here is the list of possible le
 | 30 | SESSION | SESSION | as found on CDs and DVDs |
 | 20 | TRACK | - | as found on audio CDs |
 | 10 | INDEX | - | the first logical level of the side/medium |
+Table: ChapterPhysicalEquiv meaning per track type{#ChapterPhysicalEquivMeaning}
 
 
 ### Block Structure
@@ -182,6 +183,7 @@ But a frame with a past timestamp **MUST** reference a frame already known, othe
 |:-------|:-------|:------------|
 | 0x00+  | **MUST** | Track Number (Track Entry). It is coded in EBML like form (1 octet if the value is < 0x80, 2 if < 0x4000, etc) (most significant bits set to increase the range). |
 | 0x01+  | **MUST** | Timestamp (relative to Cluster timestamp, signed int16) |
+Table: Block Header base parts{#blockHeaderBase}
 
 #### Block Header Flags
 
@@ -195,6 +197,7 @@ But a frame with a past timestamp **MUST** reference a frame already known, othe
 |        |     |        | *   11 : EBML lacing |
 |        |     |        | *   10 : fixed-size lacing |
 | 0x03+  | 7   | -      | not used |
+Table: Block Header flags part{#blockHeaderFlags}
 
 ### Lacing
 
@@ -236,6 +239,7 @@ Bit Representation                                                          | Va
 0000 1xxx  xxxx xxxx  xxxx xxxx  xxxx xxxx  xxxx xxxx                       | value -(2^34^-1) to 2^34^-1
 0000 01xx  xxxx xxxx  xxxx xxxx  xxxx xxxx  xxxx xxxx  xxxx xxxx            | value -(2^41^-1) to 2^41^-1
 0000 001x  xxxx xxxx  xxxx xxxx  xxxx xxxx  xxxx xxxx  xxxx xxxx  xxxx xxxx | value -(2^48^-1) to 2^48^-1
+Table: EBML Lacing bits usage{#ebmlLacingBits}
 
 *   Block head (with lacing bits set to 11)
 *   Lacing head: Number of frames in the lace -1 -- i.e. 2 (the 800 and 500 octets one)
@@ -275,6 +279,7 @@ But a frame with a past timestamp **MUST** reference a frame already known, othe
 |:-------|:-------|:------------|
 | 0x00+  | **MUST** | Track Number (Track Entry). It is coded in EBML like form (1 octet if the value is < 0x80, 2 if < 0x4000, etc) (most significant bits set to increase the range). |
 | 0x01+  | **MUST** | Timestamp (relative to Cluster timestamp, signed int16) |
+Table: SimpleBlock Header base parts{#simpleblockHeaderBase}
 
 ##### SimpleBlock Header Flags
 
@@ -289,6 +294,7 @@ But a frame with a past timestamp **MUST** reference a frame already known, othe
 |        |     |        | *   11 : EBML lacing |
 |        |     |        | *   10 : fixed-size lacing |
 | 0x03+  | 7   | -      | Discardable, the frames of the Block can be discarded during playing if needed |
+Table: SimpleBlock Header flags part{#simpleblockHeaderFlags}
 
 #### Laced Data
 
@@ -297,10 +303,12 @@ When lacing bit is set.
 | Offset      | Player | Description |
 |:------------|:-------|:------------|
 | 0x00        | **MUST** | Number of frames in the lace-1 (uint8) |
-| 0x01 / 0xXX | **MUST***  | Lace-coded size of each frame of the lace, except for the last one (multiple uint8). *This is not used with Fixed-size lacing as it is calculated automatically from (total size of lace) / (number of frames in lace). |
+| 0x01 / 0xXX | **MUST**  | Lace-coded size of each frame of the lace, except for the last one (multiple uint8). *This is not used with Fixed-size lacing as it is calculated automatically from (total size of lace) / (number of frames in lace). |
+Table: Lace sizes coded in the Block{#blockLacedSize}
 
 For (possibly) Laced Data
 
 | Offset      | Player | Description |
 |:------------|:-------|:------------|
 | 0x00        | **MUST** | Consecutive laced frames |
+Table: Lace data after lace sizes{#blockLacedData}
